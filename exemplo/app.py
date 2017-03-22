@@ -7,7 +7,6 @@ from flask import Flask, render_template
 from flask import request
 from flask.json import jsonify
 import json
-from clarifai.client import ClarifaiApi
 import os,sys,glob
 
 
@@ -25,7 +24,7 @@ class DummyModel(object):
 
 model = DummyModel()
 
-model = gensim.models.Word2Vec.load_word2vec_format("wiki.pt.trigram.vector", binary=True)
+model = gensim.models.KeyedVectors.load_word2vec_format("wiki.pt.trigram.vector", binary=True)
 
 @app.route('/', methods=['GET'])
 def index():
