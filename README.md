@@ -25,15 +25,13 @@ O modelo treinado com a wiki-pt encontra-se disponível para download em: https:
 
 ### Screenshots:
 
-![alt tag](exemplo/static/images/similares.png)
-
 * Exemplo de busca por palavras semanticamente similares a buscada.
 
-![alt tag](exemplo/static/images/trigram.png)
+![alt tag](exemplo/static/images/similares.png)
 
 * Exemplo utilizando um trigrama.
 
-![alt tag](exemplo/static/images/operacoes.png)
+![alt tag](exemplo/static/images/trigram.png)
 
 * Exemplo utilizando operações matemáticas nas palavras.
 
@@ -41,3 +39,4 @@ O modelo treinado com a wiki-pt encontra-se disponível para download em: https:
 
 * Exemplo retornando a palavra mais distante dado um conjunto de palavras.
 
+![alt tag](exemplo/static/images/mais_distante.png)
