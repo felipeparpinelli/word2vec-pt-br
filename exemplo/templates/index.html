@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+
+<head>
+  <meta charset="utf-8">
+  <title>word2vec-pt-br</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Loading Bootstrap -->
+  <link href="../static/bootstrap/css/bootstrap.css" rel="stylesheet">
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  
+  <!-- Loading D3 plus -->
+  <script src="http://www.d3plus.org/js/d3.js"></script>
+  <script src="http://www.d3plus.org/js/d3plus.js"></script>
+
+  <!-- Loading Flat UI -->
+  <link href="../static/css/flat-ui.css" rel="stylesheet">
+  <link href="../static/css/demo.css" rel="stylesheet">
+  <link href="../static/css/custom.css" rel="stylesheet">
+
+  <link rel="shortcut icon" href="images/favicon.ico">
+
+</head>
+
+
+<style>
+
+rect#bg{
+  fill: transparent;
+}
+
+.node {
+  cursor: pointer;
+}
+
+.node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.node text {
+  font: 10px sans-serif;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+</style>
+<body>
+  <br>
+  <h3 align="center">word2vec-pt-br</h3>
+
+  <div class="container" align="center">
+    <div class="demo-headline">
+
+      <ul class="nav nav-pills">
+        <li><a href="#"></a></li>
+        <li><a href="#"></a></li>
+        <li class="active"><a href="/">Home</a></li>
+        <li><a href="/operacoes">Operações matemáticas</a></li>
+        <li><a href="/contexto">Palavra fora de contexto</a></li> 
+        <li><a href="#">Índice de proximidade</a></li>
+        <li><a href="#">Sobre</a></li>
+    </ul>
+        
+    </div> <!-- /demo-headline -->
+
+    <div class="row">
+      <div class="col-md-1">
+          
+      </div>
+        <div class="col-md-6">
+          <input type="text" id = "word" value="" placeholder="Entre com uma palavra" class="form-control" onkeydown="if (event.keyCode == 13) document.getElementById('submit').click()"/>
+      </div>
+       <div class="col-md-2">
+          <a id = "submit" class="btn btn-block btn-lg btn-primary"><span class="fui-search"></span></a>
+      </div>
+    </div> <!-- /row -->
+
+    <div class="row">
+    <br>
+    </div>
+        <div class="col-md-4">
+
+    Número de entidades similares <select id = "topn">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10" SELECTED>10</option>
+      <option value="11">11</option>
+      <option value="12">12</option>
+      <option value="13">13</option>
+      <option value="14">14</option>
+      <option value="15">15</option>
+      <option value="16">16</option>
+      <option value="17">17</option>
+      <option value="18">18</option>
+      <option value="19">19</option>
+      <option value="20">20</option>
+    </select>
+
+    </div>
+      <div class="col-md-4">
+      Data set   <select id = "metric">
+        <option value="Wikipedia" SELECTED>Wikipedia</option>
+      </select>
+    </div>
+
+
+
+    </div> <!-- /row -->   
+
+  </div> <!-- /container -->
+
+  <div class="container" align="center">
+    <div class="demo-headline">
+        
+    </div> <!-- /demo-headline -->
+
+    <div class="row">
+    </div>
+        <div class="col-md-4">
+
+      Tipo de visualização  <select id = "model">
+        <option value="arvore">Árvore</option>
+        <option value="grafo" SELECTED>Grafo</option>
+      </select>
+
+    </div> <!-- /row -->   
+
+  
+  </div> <!-- /container -->
+
+  <div id="viz"></div>
+
+<!-- <script src="../static/js/d3.js"></script> -->
+<script>
+
+var connections = [];
+
+var margin = {top: 20, right: 120, bottom: 20, left: 120},
+    width = 960 - margin.right - margin.left,
+    height = 2000 - margin.top - margin.bottom;
+
+var i = 0,
+    duration = 750,
+    root;
+
+var tree = d3.layout.tree()
+    .size([height, width]);
+
+var diagonal = d3.svg.diagonal()
+    .projection(function(d) { return [d.y, d.x]; });
+
+var svg = d3.select("body").append("svg")
+    //.attr("width", width + margin.right + margin.left)
+    .attr("width", '100%')
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+document.getElementById("submit").onclick = function() {
+    if ($( "#model option:selected" ).text() == "Grafo") {
+
+      $("#viz").empty();
+
+      // create list of node positions
+      var positions = [
+        {"name": "alpha", "x": 10, "y": 4},
+        {"name": "beta", "x": 12, "y": 24},
+        {"name": "gamma", "x": 17, "y": 14}
+      ]
+
+      var word = document.getElementById("word").value;
+      graphPath = "/teste?graph=" + word + "&metric=" + $( "#metric option:selected" ).text();
+
+      $.ajax({
+            async: false,
+            type: "GET",
+            url: graphPath,
+            dataType: 'json',
+            contentType: "application/json; charset=utf-8",
+            success: function(comp){
+                console.log(comp);
+                connections.push.apply(connections, comp)
+            },
+            error: function(comp) {
+                alert("Palavra não encontrada!");
+            }
+        });
+
+      // create list of node connections
+      // var connections = [
+      //   {"source": "alpha", "target": "beta"},
+      //   {"source": "alpha", "target": "gamma"}
+      // ]
+      // instantiate d3plus
+      var visualization = d3plus.viz()
+        .container("#viz")
+        .type("network")
+        //.nodes(positions)
+        .edges(connections)
+        .descs({
+          "size": "How many apples",  // key referring to data will use string as description
+          "year": "What year it was"   // multiple descriptions possible
+        })
+        .id("name")
+        .draw()
+
+      // After 2 seconds, add another node and connection!
+      // setTimeout(function(){
+      //   positions.push({"name": "delta", "x": 26, "y": 21})
+      //   connections.push({"source": "beta", "target": "delta"})
+      //   visualization
+      //     .nodes(positions)
+      //     .edges(connections)
+      //     .draw()
+      // },2000)
+
+
+    }
+    else {
+      //svg.selectAll("*").remove();
+      var word = document.getElementById("word").value;
+      var topn = document.getElementById("topn").value;
+      //console.log(word);
+      if (word == "")
+        alert("Entre com uma palavra");
+      else
+        visualize(word, topn);
+      }   
+}
+
+var isUpdate = false;
+var flare = {};
+
+
+function createFlare(word, topn, data) {
+    
+  topn = topn;
+
+  if (!isUpdate) {
+    flare = {
+      "name": word,
+      "children": data[word]
+    }
+  }
+  else {
+    for (i = 0; i < data[word].length; i++) { 
+      if (word == flare['children'][i]['name']) {
+        //console.log("antes: ", flare['children'][i]['_children']);
+        flare['children'][i]['children'] = data[word];
+        //console.log("depois: ", flare['children'][i]['_children']);
+      };
+    } 
+  }
+
+  word = word;
+
+  // Check whether word is in list?
+  if (!(word in data)) {
+    console.log("palavra não encontrada");
+    return 0;
+  }
+
+
+  return flare;
+}
+
+
+function visualize(word, topn) {
+
+  word = word;
+  topn = topn;
+  data_file = '';
+  path = "/teste?most_similar=" + word;
+
+  d3.json(path, function(error, json) {
+    //if (error) throw error;
+
+    json_data = json;
+
+    root = createFlare(word, topn, json_data);
+
+    // Word Not Found
+    if (root == 0) {
+      alert("Palavra não encontrada!");
+      return;
+    }
+
+    root.x0 = height / 2;
+    root.y0 = 0;
+
+    function collapse(d) {
+      if (d.children) {
+        d._children = d.children;
+        d._children.forEach(collapse);
+        d.children = null;
+      }
+    }
+
+    root.children.forEach(collapse);
+    update(root);
+
+  });
+
+  d3.select(self.frameElement).style("height", "800px");
+}
+
+function update(source) {
+
+  // Compute the new tree layout.
+  var nodes = tree.nodes(root).reverse(),
+      links = tree.links(nodes);
+
+  // Normalize for fixed-depth.
+  nodes.forEach(function(d) { d.y = d.depth * 180; });
+
+  // Update the nodes…
+  var node = svg.selectAll("g.node")
+      .data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+  // Enter any new nodes at the parent's previous position.
+  var nodeEnter = node.enter().append("g")
+      .attr("class", "node")
+      .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+      .on("click", click);
+
+  nodeEnter.append("circle")
+      .attr("r", 1e-6)
+      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+  nodeEnter.append("text")
+      .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
+      .attr("dy", ".35em")
+      .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
+      .text(function(d) { return d.name; })
+      .style("fill-opacity", 1e-6);
+
+  // Transition nodes to their new position.
+  var nodeUpdate = node.transition()
+      .duration(duration)
+      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+
+  nodeUpdate.select("circle")
+      .attr("r", 4.5)
+      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+  nodeUpdate.select("text")
+      .style("fill-opacity", 1);
+
+  // Transition exiting nodes to the parent's new position.
+  var nodeExit = node.exit().transition()
+      .duration(duration)
+      .attr("transform", function(d) { return "translate(" + source.y + "," + source.x + ")"; })
+      .remove();
+
+  nodeExit.select("circle")
+      .attr("r", 1e-6);
+
+  nodeExit.select("text")
+      .style("fill-opacity", 1e-6);
+
+  // Update the links…
+  var link = svg.selectAll("path.link")
+      .data(links, function(d) { return d.target.id; });
+
+  // Enter any new links at the parent's previous position.
+  link.enter().insert("path", "g")
+      .attr("class", "link")
+      .attr("d", function(d) {
+        var o = {x: source.x0, y: source.y0};
+        return diagonal({source: o, target: o});
+      });
+
+  // Transition links to their new position.
+  link.transition()
+      .duration(duration)
+      .attr("d", diagonal);
+
+  // Transition exiting nodes to the parent's new position.
+  link.exit().transition()
+      .duration(duration)
+      .attr("d", function(d) {
+        var o = {x: source.x, y: source.y};
+        return diagonal({source: o, target: o});
+      })
+      .remove();
+
+  // Stash the old positions for transition.
+  nodes.forEach(function(d) {
+    d.x0 = d.x;
+    d.y0 = d.y;
+  });
+}
+
+// Toggle children on click.
+function click(d) {
+  if (d.children) {
+    d._children = d.children;
+    d.children = null;
+  } else {
+    d.children = d._children;
+    d._children = null;
+  }
+  update(d);
+  isUpdate = true;
+  visualize(d['name'], topn);
+}
+
+</script>
+
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          
+          <p>
+            <br>
+          </p>
+
+        </div> <!-- /col-md-7 -->
+
+          
+    </div>
+  </footer>
