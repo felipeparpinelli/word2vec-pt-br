@@ -18,6 +18,11 @@ O modelo treinado com a wiki-pt encontra-se disponível para download em: https:
     python app.py
 ```
 
+4. Acesse o servidor
+```
+    127.0.0.1:5000
+```
+
 ### Observações: 
 1. Como o modelo foi treinado com toda a base da wikipedia, é importante ter disponível pelo menos 2 GB livres de ram. Dependendo do espaço disponível, pode ser notada uma pequena lentidão no 'start' do servidor e na primeira 'consulta' por itens similares.
 
